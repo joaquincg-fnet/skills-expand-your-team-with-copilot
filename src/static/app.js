@@ -32,7 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Dark mode functionality
   function initializeDarkMode() {
     const savedDarkMode = localStorage.getItem("darkMode");
-    if (savedDarkMode === "enabled") {
+    
+    // Check if user has a saved preference, otherwise check system preference
+    const prefersDark = savedDarkMode === "enabled" || 
+                       (savedDarkMode === null && 
+                        window.matchMedia && 
+                        window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (prefersDark) {
       document.body.classList.add("dark-mode");
       darkModeIcon.textContent = "☀️";
     } else {
