@@ -961,6 +961,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showShareMessage("Link copied to clipboard!", "success");
     } catch (err) {
       // Fallback for browsers that don't support clipboard API
+      // Note: Using deprecated document.execCommand as a fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = url;
       textArea.style.position = "fixed";
@@ -969,7 +970,7 @@ document.addEventListener("DOMContentLoaded", () => {
       textArea.select();
       
       try {
-        document.execCommand("copy");
+        document.execCommand("copy"); // Deprecated but used as fallback
         showShareMessage("Link copied to clipboard!", "success");
       } catch (err) {
         showShareMessage("Failed to copy link", "error");
