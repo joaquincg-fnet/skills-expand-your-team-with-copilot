@@ -25,6 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
 
+  // Share modal elements
+  const shareModal = document.getElementById("share-modal");
+  const closeShareModal = document.querySelector(".close-share-modal");
+  const shareActivityName = document.getElementById("share-activity-name");
+  const shareMessage = document.getElementById("share-message");
+  let currentShareActivity = null;
+
   // Activity categories with corresponding colors
   const activityTypes = {
     sports: { label: "Sports", color: "#e8f5e9", textColor: "#2e7d32" },
@@ -568,6 +575,10 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
         }
+        <button class="share-button" data-activity="${name}" title="Share this activity">
+          <span class="share-icon">📤</span>
+          <span>Share</span>
+        </button>
       </div>
     `;
 
@@ -586,6 +597,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    shareButton.addEventListener("click", () => {
+      openShareModal(name, details);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -860,6 +877,117 @@ document.addEventListener("DOMContentLoaded", () => {
     setDayFilter,
     setTimeRangeFilter,
   };
+
+  // Share modal functions
+  function openShareModal(activityName, activityDetails) {
+    currentShareActivity = {
+      name: activityName,
+      details: activityDetails
+    };
+    
+    shareActivityName.textContent = activityName;
+    shareModal.classList.remove("hidden");
+    setTimeout(() => {
+      shareModal.classList.add("show");
+    }, 10);
+    shareMessage.classList.add("hidden");
+  }
+
+  function closeShareModalHandler() {
+    shareModal.classList.remove("show");
+    setTimeout(() => {
+      shareModal.classList.add("hidden");
+      currentShareActivity = null;
+    }, 300);
+  }
+
+  function showShareMessage(text, type) {
+    shareMessage.textContent = text;
+    shareMessage.className = `message ${type}`;
+    shareMessage.classList.remove("hidden");
+
+    setTimeout(() => {
+      shareMessage.classList.add("hidden");
+    }, 3000);
+  }
+
+  function getShareUrl() {
+    // Get current page URL
+    const baseUrl = window.location.origin + window.location.pathname;
+    // Add activity name as a query parameter for future enhancement
+    return `${baseUrl}?activity=${encodeURIComponent(currentShareActivity.name)}`;
+  }
+
+  function getShareText() {
+    if (!currentShareActivity) return "";
+    
+    const { name, details } = currentShareActivity;
+    const schedule = formatSchedule(details);
+    return `Check out this activity at Mergington High School: ${name} - ${details.description}. Schedule: ${schedule}`;
+  }
+
+  // Share button handlers
+  document.getElementById("share-twitter").addEventListener("click", () => {
+    const text = getShareText();
+    const url = getShareUrl();
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, "_blank", "width=600,height=400");
+  });
+
+  document.getElementById("share-facebook").addEventListener("click", () => {
+    const url = getShareUrl();
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(facebookUrl, "_blank", "width=600,height=400");
+  });
+
+  document.getElementById("share-linkedin").addEventListener("click", () => {
+    const url = getShareUrl();
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    window.open(linkedinUrl, "_blank", "width=600,height=400");
+  });
+
+  document.getElementById("share-email").addEventListener("click", () => {
+    const subject = `Check out: ${currentShareActivity.name}`;
+    const body = getShareText() + `\n\n${getShareUrl()}`;
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+  });
+
+  document.getElementById("copy-link").addEventListener("click", async () => {
+    const url = getShareUrl();
+    
+    try {
+      await navigator.clipboard.writeText(url);
+      showShareMessage("Link copied to clipboard!", "success");
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      // Note: Using deprecated document.execCommand as a fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      
+      try {
+        document.execCommand("copy"); // Deprecated but used as fallback
+        showShareMessage("Link copied to clipboard!", "success");
+      } catch (err) {
+        showShareMessage("Failed to copy link", "error");
+      }
+      
+      document.body.removeChild(textArea);
+    }
+  });
+
+  // Close share modal event listeners
+  closeShareModal.addEventListener("click", closeShareModalHandler);
+
+  window.addEventListener("click", (event) => {
+    if (event.target === shareModal) {
+      closeShareModalHandler();
+    }
+  });
 
   // Initialize app
   checkAuthentication();
